@@ -20,20 +20,23 @@ import sys
 if not os.environ.get("OPENAI_API_KEY"):
     print("No OpenAI API key found")
     sys.exit(1)
-openai.api_key = os.environ["OPENAI_API_KEY"]
 
-# Analyze the code changes with OpenAI
+client = openai.OpenAI()
+
 model_engine = os.environ["MODEL"]
 commit_title = os.environ["COMMIT_TITLE"]
 commit_message = os.environ["COMMIT_BODY"]
+max_length = int(os.environ["MAX_LENGTH"])
+
+# Analyze the code changes with OpenAI
 code = sys.stdin.read()
 header = (f"Commit title is '{commit_title}'\n"
           f"and commit message is '{commit_message}'\n")
 prompt = os.environ["PROMPT"] + "\nCode of commit is:\n```\n" + code + "\n```"
-if len(prompt) > 4000:
+if len(prompt) > max_length:
     print(f"Prompt too long for OpenAI: {len(prompt)} characters, "
-          "sending only first 4000 characters")
-    prompt = prompt[:4000]
+          f"sending only first {max_length} characters")
+    prompt = prompt[:max_length]
 
 kwargs = {'model': model_engine}
 kwargs['temperature'] = 0.5
@@ -45,12 +48,9 @@ kwargs['messages'] = [
     {"role": "user", "content": prompt},
 ]
 try:
-    response = openai.ChatCompletion.create(**kwargs)
+    response = client.chat.completions.create(**kwargs)
     if response.choices:
-        if 'text' in response.choices[0]:
-            review_text = response.choices[0].text.strip()
-        else:
-            review_text = response.choices[0].message.content.strip()
+        review_text = response.choices[0].message.content.strip()
     else:
         review_text = f"No correct answer from OpenAI!\n{response.text}"
 except Exception as e:

@@ -1,6 +1,6 @@
 # OpenAI Code Review Action
 
-This action uses the OpenAI GPT-3 language model to review code changes in a pull request.
+This action uses the OpenAI GPT-4 language model to review code changes in a pull request.
 
 ## Usage
 
@@ -18,13 +18,16 @@ jobs:
       pull-requests: write
     steps:
       # This step checks out a copy of your repository.
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       # This step references the directory that contains the action.
-      - uses: sshnaidm/gpt-code-review-action@v1
+      - uses: sshnaidm/gpt-code-review-action@v3.0
         with:
           openai-key: ${{ secrets.OPENAI_API_KEY }}
-          # model: 'gpt-4'
+          # model: 'gpt-4.1-mini'
+          # max-length: 8000
           # prompt: 'Only suggest performance improvements for this code.'
+          # post-if-error: false
+          # review-title: '# My AI bot review'
 
 ```
 
@@ -38,21 +41,31 @@ To post comments in Pull Requests, the job requires additional permissions: `pul
 
 `github-token`: The token used to authenticate with the GitHub API (optional, will take a default `${{ github.token }}`).
 
-`model`: The OpenAI language model to use for code review (optional, with a default `gpt-3.5-turbo`).
+`model`: The OpenAI language model to use for code review (optional, with a default `gpt-4.1-mini`).
 
 `openai-key`: The OpenAI API key used for authentication (**required**).
 
 `prompt`: The prompt to use for the analysis (optional, with a default value).
 
+`max-length`: The diff that is send to OpenAI for review is cut off after 8000 characters by default. With this parameter you can adjust this limit.
+
 `post-if-error`: Whether to post a comment if there was an error (optional, with a default `true`).
+
+`review-title`: The title to use for the review comment (optional, with a default `Code Review by OpenAI`).
 
 ### Limitations
 
-Currently, only the first 4000 characters are sent due to OpenAI's limitations. Later, we will send the text in chunks, and each part will be reviewed separately.
+Currently, only the first 8000 characters are sent due to OpenAI's limitations. Later, we will send the text in chunks, and each part will be reviewed separately.
 
 ## Contributing
 
 Contributions to this action are welcome! Please create an issue or pull request in the repository.
+
+## Testing
+
+You can run `./test.sh` that just verifies that the Python code is able to send something to the cheapest OpenAI model and get something out of it. (The model is kindly asked to tell "It works!").
+
+The test expects you have Python 3.10 available as it is the one used in the action itself. There is an appropriate file `.python_version` for [pyenv](https://github.com/pyenv/pyenv).
 
 ## License
 
